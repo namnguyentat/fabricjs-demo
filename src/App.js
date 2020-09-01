@@ -37,8 +37,8 @@ class App extends React.Component {
         left: 100,
         top: 50,
         scaleX: 5,
-        // width: 10,
         stroke: 'red',
+        strokeUniform: true,
       })
     );
   };
@@ -47,7 +47,7 @@ class App extends React.Component {
     const rect = new fabric.Rect({
       left: 100,
       top: 50,
-      fill: '#D81B60',
+      fill: '',
       width: 50,
       height: 50,
       strokeWidth: 2,
@@ -58,6 +58,7 @@ class App extends React.Component {
       scaleX: 3,
       scaleY: 3,
       hasControls: true,
+      strokeUniform: true,
     });
 
     canvas.add(rect);
@@ -88,6 +89,7 @@ class App extends React.Component {
       angle: 0,
       startAngle: 0,
       endAngle: Math.PI,
+      strokeUniform: true,
     });
 
     canvas.add(circle1);
