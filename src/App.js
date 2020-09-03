@@ -2,6 +2,12 @@ import React from 'react';
 import './App.css';
 import { fabric } from 'fabric';
 import { debounce } from 'lodash';
+import line from './images/line.png';
+import rect from './images/rect.png';
+import circle from './images/circle.png';
+import arc from './images/arc.png';
+import twoLine from './images/two_line.png';
+import crossLine from './images/cross.png';
 
 let canvas;
 let h = [];
@@ -166,6 +172,27 @@ class App extends React.Component {
         selectingItem: null,
       });
     });
+    canvas.on('drop', (event) => {
+      console.log(event.e);
+      const x = event.e.offsetX;
+      const y = event.e.offsetY;
+      switch (this.dragItem) {
+        case 'line':
+          return this.addLine(x, y);
+        case 'twoLine':
+          return this.addTwoLine(x, y);
+        case 'crossLine':
+          return this.addCrossLine(x, y);
+        case 'rect':
+          return this.addRect(x, y);
+        case 'circle':
+          return this.addCircle(x, y);
+        case 'arc':
+          return this.addArc(x, y);
+        default:
+          return null;
+      }
+    });
 
     // create grid
     for (let i = 0; i < canvasWidth / grid; i++) {
@@ -305,11 +332,11 @@ class App extends React.Component {
     }
   }
 
-  addLine = () => {
+  addLine = (left, top) => {
     canvas.add(
       new fabric.Line([0, 0, 0, 100], {
-        left: 100,
-        top: 50,
+        left: left || 100,
+        top: top || 50,
         strokeWidth: 5,
         stroke: '#ff0000',
         strokeUniform: true,
@@ -317,10 +344,53 @@ class App extends React.Component {
     );
   };
 
-  addRect = () => {
+  addTwoLine = (left, top) => {
+    var poly = new fabric.Polyline(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 50 },
+        { x: 50, y: 50 },
+        { x: 0, y: 50 },
+        { x: 0, y: 100 },
+      ],
+      {
+        strokeWidth: 5,
+        stroke: '#ff0000',
+        left: left || 100,
+        top: top || 100,
+        fill: '',
+        strokeUniform: true,
+      }
+    );
+    canvas.add(poly);
+  };
+
+  addCrossLine = (left, top) => {
+    var poly = new fabric.Polyline(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 50 },
+        { x: 50, y: 50 },
+        { x: -50, y: 50 },
+        { x: 0, y: 50 },
+        { x: 0, y: 100 },
+      ],
+      {
+        strokeWidth: 5,
+        stroke: '#ff0000',
+        left: left || 100,
+        top: top || 100,
+        fill: '',
+        strokeUniform: true,
+      }
+    );
+    canvas.add(poly);
+  };
+
+  addRect = (left, top) => {
     const rect = new fabric.Rect({
-      left: 100,
-      top: 50,
+      left: left || 100,
+      top: top || 50,
       fill: '',
       width: 50,
       height: 50,
@@ -333,12 +403,12 @@ class App extends React.Component {
     canvas.add(rect);
   };
 
-  addCircle = () => {
+  addCircle = (left, top) => {
     const circle2 = new fabric.Circle({
       radius: 25,
       fill: '',
-      left: 100,
-      top: 50,
+      left: left || 100,
+      top: top || 50,
       stroke: '#ff0000',
       strokeWidth: 5,
       strokeUniform: true,
@@ -346,12 +416,12 @@ class App extends React.Component {
     canvas.add(circle2);
   };
 
-  addArc = () => {
+  addArc = (left, top) => {
     const circle1 = new fabric.Circle({
       radius: 50,
       fill: '',
-      left: 100,
-      top: 50,
+      left: left || 100,
+      top: top || 50,
       stroke: '#ff0000',
       strokeWidth: 5,
       angle: 0,
@@ -382,6 +452,22 @@ class App extends React.Component {
     const item = canvas.getActiveObject();
     if (item) {
       canvas.remove(item);
+      canvas.renderAll();
+    }
+  };
+
+  flipXObject = () => {
+    const item = canvas.getActiveObject();
+    if (item) {
+      item.set('flipX', !item.flipX);
+      canvas.renderAll();
+    }
+  };
+
+  flipYObject = () => {
+    const item = canvas.getActiveObject();
+    if (item) {
+      item.set('flipY', !item.flipY);
       canvas.renderAll();
     }
   };
@@ -417,6 +503,8 @@ class App extends React.Component {
         <div>
           <button onClick={this.updateLine}>Update</button>
           <button onClick={this.removeActiveObject}>Remove</button>
+          <button onClick={this.flipXObject}>Flip X</button>
+          <button onClick={this.flipYObject}>Flip Y</button>
         </div>
       </div>
     );
@@ -483,6 +571,8 @@ class App extends React.Component {
         <div>
           <button onClick={this.updateRect}>Update</button>
           <button onClick={this.removeActiveObject}>Remove</button>
+          <button onClick={this.flipXObject}>Flip X</button>
+          <button onClick={this.flipYObject}>Flip Y</button>
         </div>
       </div>
     );
@@ -562,6 +652,8 @@ class App extends React.Component {
         <div>
           <button onClick={this.updateCircle}>Update</button>
           <button onClick={this.removeActiveObject}>Remove</button>
+          <button onClick={this.flipXObject}>Flip X</button>
+          <button onClick={this.flipYObject}>Flip Y</button>
         </div>
       </div>
     );
@@ -590,6 +682,56 @@ class App extends React.Component {
         >
           <div className="actions">
             <h2>Action</h2>
+            <div style={{ display: 'block' }}>
+              <img
+                src={line}
+                onDragStart={() => {
+                  this.dragItem = 'line';
+                }}
+                alt="line"
+                dragable="true"
+              />
+              <img
+                src={rect}
+                onDragStart={() => {
+                  this.dragItem = 'rect';
+                }}
+                alt="rect"
+                dragable="true"
+              />
+              <img
+                src={circle}
+                onDragStart={() => {
+                  this.dragItem = 'circle';
+                }}
+                alt="circle"
+                dragable="true"
+              />
+              <img
+                src={arc}
+                onDragStart={() => {
+                  this.dragItem = 'arc';
+                }}
+                alt="arc"
+                dragable="true"
+              />
+              <img
+                src={twoLine}
+                onDragStart={() => {
+                  this.dragItem = 'twoLine';
+                }}
+                alt="line"
+                dragable="true"
+              />
+              <img
+                src={crossLine}
+                onDragStart={() => {
+                  this.dragItem = 'crossLine';
+                }}
+                alt="line"
+                dragable="true"
+              />
+            </div>
             <button
               style={{ display: 'block', marginTop: '10px' }}
               onClick={this.export}
@@ -607,30 +749,6 @@ class App extends React.Component {
               onClick={this.redo}
             >
               Redo
-            </button>
-            <button
-              style={{ display: 'block', marginTop: '10px' }}
-              onClick={this.addLine}
-            >
-              Add line
-            </button>
-            <button
-              style={{ display: 'block', marginTop: '10px' }}
-              onClick={this.addCircle}
-            >
-              Add circle
-            </button>
-            <button
-              style={{ display: 'block', marginTop: '10px' }}
-              onClick={this.addRect}
-            >
-              Add rectangle
-            </button>
-            <button
-              style={{ display: 'block', marginTop: '10px' }}
-              onClick={this.addArc}
-            >
-              Add ARC
             </button>
           </div>
           {this.renderSelectingItem()}
