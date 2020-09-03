@@ -208,7 +208,46 @@ class App extends React.Component {
   };
 
   export = () => {
-    const content = canvas.getObjects().filter((o) => o.selectable);
+    const content = canvas
+      .getObjects()
+      .filter((o) => o.selectable)
+      .map((o) => {
+        switch (o.type) {
+          case 'line':
+            return {
+              type: 'line',
+              x1: o.aCoords.tl.x,
+              y1: o.aCoords.tl.y,
+              x2: o.aCoords.bl.x,
+              y2: o.aCoords.bl.y,
+              thickness: o.strokeWidth,
+              color: o.stroke,
+            };
+          case 'rect':
+            return {
+              type: 'rect',
+              x1: o.aCoords.tl.x,
+              y1: o.aCoords.tl.y,
+              x2: o.aCoords.bl.x,
+              y2: o.aCoords.bl.y,
+              thickness: o.strokeWidth,
+              color: o.stroke,
+            };
+          case 'circle':
+            return {
+              type: 'circle',
+              x: o.left - o.radius,
+              y: o.top - o.radius,
+              radius: o.radius,
+              thickness: o.strokeWidth,
+              color: o.stroke,
+              startAngle: o.startAngle,
+              endAngle: o.endAngle,
+            };
+          default:
+            return null;
+        }
+      });
     const a = document.createElement('a');
     const file = new Blob([JSON.stringify(content)], { type: 'text/plain' });
     a.href = URL.createObjectURL(file);
@@ -268,7 +307,6 @@ class App extends React.Component {
       fill: '',
       left: 100,
       top: 50,
-      opacity: 0.7,
       stroke: '#ff0000',
       strokeWidth: 5,
       strokeUniform: true,
