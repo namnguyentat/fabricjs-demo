@@ -7,6 +7,14 @@ let canvas;
 let h = [];
 let isRedoing = false;
 class App extends React.Component {
+  constructor() {
+    super();
+    this.state = {
+      selectingItem: null,
+    };
+    window.app = this;
+  }
+
   componentDidMount() {
     canvas = this.__canvas = new fabric.Canvas('canvas');
     const grid = 50;
@@ -18,26 +26,6 @@ class App extends React.Component {
     canvas.setHeight(canvasHeight);
     const relayout = debounce(() => this.relayout(), 200);
 
-    // create grid
-
-    for (let i = 0; i < canvasWidth / grid; i++) {
-      canvas.add(
-        new fabric.Line([i * grid, 0, i * grid, canvasHeight], {
-          type: 'line',
-          stroke: '#ccc',
-          selectable: false,
-          excludeFromExport: true,
-        })
-      );
-      canvas.add(
-        new fabric.Line([0, i * grid, canvasWidth, i * grid], {
-          type: 'line',
-          stroke: '#ccc',
-          selectable: false,
-          excludeFromExport: true,
-        })
-      );
-    }
     canvas.on('object:added', () => {
       if (!isRedoing) {
         h = [];
@@ -46,7 +34,6 @@ class App extends React.Component {
       relayout();
     });
     // snap to grid
-
     canvas.on('object:moving', function (options) {
       const target = options.target;
       if (target.type === 'rect' || target.type === 'circle') {
@@ -84,6 +71,121 @@ class App extends React.Component {
         }
       }
     });
+    canvas.on('selection:created', (options) => {
+      const target = options.target;
+      if (target) {
+        switch (target.type) {
+          case 'line':
+            this.setState({
+              selectingItem: {
+                type: 'line',
+                x1: target.x1,
+                x2: target.x2,
+                y1: target.y1,
+                y2: target.y2,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+              },
+            });
+            break;
+          case 'rect':
+            this.setState({
+              selectingItem: {
+                type: 'rect',
+                width: target.width,
+                height: target.height,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+              },
+            });
+            break;
+          case 'circle':
+            this.setState({
+              selectingItem: {
+                type: 'circle',
+                radius: target.radius,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+                startAngle: target.startAngle,
+                endAngle: target.endAngle,
+              },
+            });
+            break;
+          default:
+            return null;
+        }
+      }
+    });
+    canvas.on('selection:updated', (options) => {
+      const target = options.target;
+      if (options.target) {
+        switch (target.type) {
+          case 'line':
+            this.setState({
+              selectingItem: {
+                type: 'line',
+                x1: target.x1,
+                x2: target.x2,
+                y1: target.y1,
+                y2: target.y2,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+              },
+            });
+            break;
+          case 'rect':
+            this.setState({
+              selectingItem: {
+                type: 'rect',
+                width: target.width,
+                height: target.height,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+              },
+            });
+            break;
+          case 'circle':
+            this.setState({
+              selectingItem: {
+                type: 'circle',
+                radius: target.radius,
+                strokeWidth: target.strokeWidth,
+                stroke: target.stroke,
+                startAngle: target.startAngle,
+                endAngle: target.endAngle,
+              },
+            });
+            break;
+          default:
+            return null;
+        }
+      }
+    });
+    canvas.on('selection:cleared', (options) => {
+      this.setState({
+        selectingItem: null,
+      });
+    });
+
+    // create grid
+    for (let i = 0; i < canvasWidth / grid; i++) {
+      canvas.add(
+        new fabric.Line([i * grid, 0, i * grid, canvasHeight], {
+          type: 'line',
+          stroke: '#ccc',
+          selectable: false,
+          excludeFromExport: true,
+        })
+      );
+      canvas.add(
+        new fabric.Line([0, i * grid, canvasWidth, i * grid], {
+          type: 'line',
+          stroke: '#ccc',
+          selectable: false,
+          excludeFromExport: true,
+        })
+      );
+    }
     window.ca = canvas;
   }
 
@@ -107,8 +209,12 @@ class App extends React.Component {
 
   undo() {
     if (canvas._objects.length > 0) {
-      h.push(canvas._objects.pop());
-      canvas.renderAll();
+      const index = canvas._objects.findIndex((o) => o.selectable);
+      if (index > -1) {
+        h.push(canvas._objects[index]);
+        canvas._objects.splice(index, 1);
+        canvas.renderAll();
+      }
     }
   }
 
@@ -125,7 +231,7 @@ class App extends React.Component {
         left: 100,
         top: 50,
         strokeWidth: 5,
-        stroke: 'red',
+        stroke: '#ff0000',
         strokeUniform: true,
       })
     );
@@ -139,7 +245,7 @@ class App extends React.Component {
       width: 50,
       height: 50,
       strokeWidth: 5,
-      stroke: '#880E4F',
+      stroke: '#ff0000',
       hasControls: true,
       strokeUniform: true,
     });
@@ -150,11 +256,11 @@ class App extends React.Component {
   addCircle = () => {
     const circle2 = new fabric.Circle({
       radius: 25,
-      fill: '#4FC3F7',
+      fill: '',
       left: 100,
       top: 50,
       opacity: 0.7,
-      stroke: 'blue',
+      stroke: '#ff0000',
       strokeWidth: 5,
       strokeUniform: true,
     });
@@ -163,11 +269,11 @@ class App extends React.Component {
 
   addArc = () => {
     const circle1 = new fabric.Circle({
-      radius: 65,
+      radius: 50,
       fill: '',
       left: 100,
       top: 50,
-      stroke: 'red',
+      stroke: '#ff0000',
       strokeWidth: 5,
       angle: 0,
       startAngle: 0,
@@ -178,34 +284,260 @@ class App extends React.Component {
     canvas.add(circle1);
   };
 
+  renderSelectingItem = () => {
+    const { selectingItem } = this.state;
+    if (!selectingItem) return null;
+    switch (selectingItem.type) {
+      case 'line':
+        return this.renderLineEditor();
+      case 'rect':
+        return this.renderRectEditor();
+      case 'circle':
+        return this.renderCircleEditor();
+      default:
+        return null;
+    }
+  };
+
+  renderLineEditor = () => {
+    const { selectingItem } = this.state;
+    return (
+      <div>
+        <div>-----------------------------------------</div>
+        <h2>Editor</h2>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.strokeWidth = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.strokeWidth}
+            type="number"
+          />
+          Thickness
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.stroke = e.target.value;
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.stroke}
+            type="color"
+          />
+          Color
+        </label>
+        <div>
+          <button onClick={this.updateLine}>Update</button>
+        </div>
+      </div>
+    );
+  };
+
+  updateLine = () => {
+    const { selectingItem } = this.state;
+    const activeObject = canvas.getActiveObject();
+    activeObject.set('strokeWidth', selectingItem.strokeWidth);
+    activeObject.set('stroke', selectingItem.stroke);
+    canvas.renderAll();
+  };
+
+  renderRectEditor = () => {
+    const { selectingItem } = this.state;
+    return (
+      <div>
+        <div>-----------------------------------------</div>
+        <h2>Editor</h2>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.width = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.width}
+            type="number"
+          />
+          Width
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.height = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.height}
+            type="number"
+          />
+          Height
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.strokeWidth = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.strokeWidth}
+            type="number"
+          />
+          Thickness
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.stroke = e.target.value;
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.stroke}
+            type="color"
+          />
+          Color
+        </label>
+        <div>
+          <button onClick={this.updateRect}>Update</button>
+        </div>
+      </div>
+    );
+  };
+
+  updateRect = () => {
+    const { selectingItem } = this.state;
+    const activeObject = canvas.getActiveObject();
+    activeObject.set('width', selectingItem.width);
+    activeObject.set('height', selectingItem.height);
+    activeObject.set('strokeWidth', selectingItem.strokeWidth);
+    activeObject.set('stroke', selectingItem.stroke);
+    canvas.renderAll();
+  };
+
+  renderCircleEditor = () => {
+    const { selectingItem } = this.state;
+    return (
+      <div>
+        <div>-----------------------------------------</div>
+        <h2>Editor</h2>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.radius = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.radius}
+            type="number"
+          />
+          Radius
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.startAngle = parseFloat(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.startAngle}
+            type="float"
+          />
+          Start Angle
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.endAngle = parseFloat(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.endAngle}
+            type="float"
+          />
+          End Angle
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.strokeWidth = parseInt(e.target.value);
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.strokeWidth}
+            type="number"
+          />
+          Thickness
+        </label>
+        <label>
+          <input
+            onChange={(e) => {
+              selectingItem.stroke = e.target.value;
+              this.setState({ selectingItem });
+            }}
+            value={selectingItem.stroke}
+            type="color"
+          />
+          Color
+        </label>
+        <div>
+          <button onClick={this.updateCircle}>Update</button>
+        </div>
+      </div>
+    );
+  };
+
+  updateCircle = () => {
+    const { selectingItem } = this.state;
+    const activeObject = canvas.getActiveObject();
+    activeObject.set('radius', selectingItem.radius);
+    activeObject.set('startAngle', selectingItem.startAngle);
+    activeObject.set('endAngle', selectingItem.endAngle);
+    activeObject.set('strokeWidth', selectingItem.strokeWidth);
+    activeObject.set('stroke', selectingItem.stroke);
+    canvas.renderAll();
+  };
+
   render() {
     return (
       <div className="App" style={{ display: 'flex' }}>
         <div style={{ border: '1px solid #ccc', margin: '20px' }}>
-          <canvas id="canvas" width="1000" height="800" />
+          <canvas id="canvas" width="800" height="800" />
         </div>
         <div
           className="panel"
-          style={{ border: '1px solid #ccc', margin: '20px' }}
+          style={{ width: '250px', border: '1px solid #ccc', margin: '20px' }}
         >
-          <div>
-            <button onClick={this.undo}>Undo</button>
+          <div className="actions">
+            <h2>Action</h2>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.undo}
+            >
+              Undo
+            </button>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.redo}
+            >
+              Redo
+            </button>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.addLine}
+            >
+              Add line
+            </button>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.addCircle}
+            >
+              Add circle
+            </button>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.addRect}
+            >
+              Add rectangle
+            </button>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.addArc}
+            >
+              Add ARC
+            </button>
           </div>
-          <div>
-            <button onClick={this.redo}>Redo</button>
-          </div>
-          <div>
-            <button onClick={this.addLine}>Add line</button>
-          </div>
-          <div>
-            <button onClick={this.addCircle}>Add circle</button>
-          </div>
-          <div>
-            <button onClick={this.addRect}>Add rectangle</button>
-          </div>
-          <div>
-            <button onClick={this.addArc}>Add ARC</button>
-          </div>
+          {this.renderSelectingItem()}
         </div>
       </div>
     );
