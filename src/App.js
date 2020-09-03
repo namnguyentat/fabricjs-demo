@@ -207,6 +207,15 @@ class App extends React.Component {
     });
   };
 
+  export = () => {
+    const content = canvas.getObjects().filter((o) => o.selectable);
+    const a = document.createElement('a');
+    const file = new Blob([JSON.stringify(content)], { type: 'text/plain' });
+    a.href = URL.createObjectURL(file);
+    a.download = 'objects.json';
+    a.click();
+  };
+
   undo() {
     if (canvas._objects.length > 0) {
       const index = canvas._objects.findIndex((o) => o.selectable);
@@ -500,6 +509,12 @@ class App extends React.Component {
         >
           <div className="actions">
             <h2>Action</h2>
+            <button
+              style={{ display: 'block', marginTop: '10px' }}
+              onClick={this.export}
+            >
+              Export
+            </button>
             <button
               style={{ display: 'block', marginTop: '10px' }}
               onClick={this.undo}
